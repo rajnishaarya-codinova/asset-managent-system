@@ -15,9 +15,8 @@ export class UserController {
     return this.userService.signup(body);
   }
 
-  @Serialize(UserResponseDto)
   @Post('/signin')
-  signin(@Body() body: SigninRequestDto): Promise<UserResponseDto> {
+  signin(@Body() body: SigninRequestDto) {
     return this.userService.signin(body);
   }
 }

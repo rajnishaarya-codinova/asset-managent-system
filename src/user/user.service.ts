@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { AuthService } from 'src/shared/auth/auth.service';
 import { comparePassword, hashPassword } from 'src/shared/utils/userUtils';
 import { SigninRequestDto } from './dtos/request/sign-request.dto';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
@@ -12,7 +12,10 @@ import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly authService: AuthService,
+  ) {}
 
   async signup(data: SignupRequestDto): Promise<UserResponseDto> {
     const existing = await this.userRepository.findByEmail(data.email);
@@ -26,7 +29,7 @@ export class UserService {
     });
   }
 
-  async signin(data: SigninRequestDto): Promise<UserResponseDto> {
+  async signin(data: SigninRequestDto): Promise<{ token: string }> {
     const user = await this.userRepository.findByEmail(data.email);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -36,6 +39,7 @@ export class UserService {
       throw new BadRequestException('Invalid Password');
     }
 
-    return user;
+    const jwtToken = await this.authService.signPayload({ email: user.email });
+    return { token: jwtToken };
   }
 }
