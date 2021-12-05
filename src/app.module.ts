@@ -4,7 +4,13 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/asset-management-system'),
+    MongooseModule.forRootAsync({
+      useFactory: async () => ({
+        uri: 'mongodb://localhost/asset-management-system',
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }),
+    }),
     UserModule,
   ],
 })

@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { Serialize } from 'src/shared/interceptors/serialize.interceptor';
+import { SigninRequestDto } from './dtos/request/sign-request.dto';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
 import { UserResponseDto } from './dtos/response/user-response.dto';
 import { UserService } from './user.service';
@@ -10,7 +11,13 @@ export class UserController {
 
   @Serialize(UserResponseDto)
   @Post('/signup')
-  signup(@Body() body: SignupRequestDto) {
+  signup(@Body() body: SignupRequestDto): Promise<UserResponseDto> {
     return this.userService.signup(body);
+  }
+
+  @Serialize(UserResponseDto)
+  @Post('/signin')
+  signin(@Body() body: SigninRequestDto): Promise<UserResponseDto> {
+    return this.userService.signin(body);
   }
 }
