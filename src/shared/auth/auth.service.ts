@@ -21,6 +21,13 @@ export class AuthService {
     return this.jwtService.sign(payload, this.jwtOptions);
   }
 
+  validateJwtToken(token: string): Promise<IJwtPayload> {
+    return this.jwtService.verify(token, {
+      secret: 'secret',
+      ignoreExpiration: true,
+    });
+  }
+
   async validatePayload(payload: IJwtPayload): Promise<User> {
     const user = await this.userRepository.findByEmail(payload.email);
     if (!user) {

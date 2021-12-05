@@ -1,7 +1,12 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
+
+export interface IRefreshToken {
+  token: string;
+  validTill: Date;
+}
 
 @Schema()
 export class User {
@@ -19,6 +24,14 @@ export class User {
 
   @Prop({ required: true })
   company: string;
+
+  @Prop(
+    raw({
+      token: String,
+      validTill: Date,
+    }),
+  )
+  refreshToken: IRefreshToken;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
