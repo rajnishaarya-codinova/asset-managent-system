@@ -1,9 +1,10 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { Serialize } from 'src/shared/interceptors/serialize.interceptor';
-import { RefreshTokenRequestDto } from './dtos/request/refreshToken-request.dto';
+import { TokenRequestDto } from './dtos/request/token-request.dto';
 import { SigninRequestDto } from './dtos/request/sign-request.dto';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
 import { UserResponseDto } from './dtos/response/user-response.dto';
+import { UserDocument } from './schema/user.schema';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -12,17 +13,17 @@ export class UserController {
 
   @Serialize(UserResponseDto)
   @Post('/signup')
-  signup(@Body() body: SignupRequestDto): Promise<UserResponseDto> {
+  signup(@Body() body: SignupRequestDto): Promise<UserDocument> {
     return this.userService.signup(body);
   }
 
   @Post('/signin')
-  signin(@Body() body: SigninRequestDto) {
+  signin(@Body() body: SigninRequestDto): Promise<TokenRequestDto> {
     return this.userService.signin(body);
   }
 
   @Post('/jwt/refresh')
-  refreshJwtToken(@Body() body: RefreshTokenRequestDto) {
+  refreshJwtToken(@Body() body: TokenRequestDto): Promise<TokenRequestDto> {
     return this.userService.reissueAuthToken(body);
   }
 }

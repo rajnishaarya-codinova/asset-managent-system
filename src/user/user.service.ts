@@ -11,8 +11,9 @@ import { SignupRequestDto } from './dtos/request/signup-request.dto';
 import { UserResponseDto } from './dtos/response/user-response.dto';
 import { UserRepository } from './user.repository';
 import { daysFromNow, isExpired, uuid } from 'src/shared/utils/common.utils';
-import { RefreshTokenRequestDto } from './dtos/request/refreshToken-request.dto';
-import { IRefreshToken } from './schema/user.schema';
+import { TokenRequestDto } from './dtos/request/token-request.dto';
+import { IRefreshToken, UserDocument } from './schema/user.schema';
+import { ObjectId } from 'mongoose';
 
 @Injectable()
 export class UserService {
@@ -21,7 +22,7 @@ export class UserService {
     private readonly authService: AuthService,
   ) {}
 
-  async generateJwtRefreshToken(userId) {
+  async generateJwtRefreshToken(userId: ObjectId) {
     const token = uuid();
     const refreshToken: IRefreshToken = {
       token,
@@ -33,7 +34,7 @@ export class UserService {
     return token;
   }
 
-  async signup(data: SignupRequestDto): Promise<UserResponseDto> {
+  async signup(data: SignupRequestDto): Promise<UserDocument> {
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
       throw new BadRequestException('User with the email already exists');
@@ -62,9 +63,7 @@ export class UserService {
     return { token: jwtToken, refreshToken };
   }
 
-  async reissueAuthToken(
-    data: RefreshTokenRequestDto,
-  ): Promise<RefreshTokenRequestDto> {
+  async reissueAuthToken(data: TokenRequestDto): Promise<TokenRequestDto> {
     const { token, refreshToken } = data;
 
     if (!(token && refreshToken)) {

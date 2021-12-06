@@ -9,8 +9,7 @@ export class UserRepository {
   constructor(@InjectModel('User') private readonly userModal: Model<User>) {}
 
   async createUser(data: SignupRequestDto): Promise<UserDocument> {
-    const user = await this.userModal.create(data);
-    return user;
+    return this.userModal.create(data);
   }
 
   async findByEmail(email: string): Promise<UserDocument> {
@@ -21,7 +20,10 @@ export class UserRepository {
     return user;
   }
 
-  async findByIdAndUpdate(id: ObjectId, data): Promise<UserDocument> {
+  async findByIdAndUpdate(
+    id: ObjectId,
+    data: Partial<User>,
+  ): Promise<UserDocument> {
     return this.userModal.findByIdAndUpdate(id, data);
   }
 }
