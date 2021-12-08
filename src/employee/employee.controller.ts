@@ -1,10 +1,16 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/shared/decorators/getUser.decorator';
-import { Serialize } from 'src/shared/interceptors/serialize.interceptor';
 import { UserDocument } from 'src/user/schema/user.schema';
 import { CreateEmployeeRequestDto } from './dtos/request/create-employee-request.dto';
-import { CreateEmployeeResponseDto } from './dtos/response/create-employee-response.dto';
 import { EmployeeService } from './employee.service';
 import { EmployeeDocument } from './schema/employee.schema';
 
@@ -12,15 +18,17 @@ import { EmployeeDocument } from './schema/employee.schema';
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
-  @Serialize(CreateEmployeeResponseDto)
   @Post()
   @UseGuards(AuthGuard('jwt'))
   async createEmployee(
     @Body()
-    data: CreateEmployeeRequestDto,
+    createEmployeeAttrs: CreateEmployeeRequestDto,
     @GetUser() user: UserDocument,
   ): Promise<EmployeeDocument> {
-    return this.employeeService.createEmployee({ ...data, manager: user._id });
+    return this.employeeService.createEmployee({
+      ...createEmployeeAttrs,
+      manager: user._id,
+    });
   }
 
   @Get()
@@ -29,5 +37,29 @@ export class EmployeeController {
     @GetUser() user: UserDocument,
   ): Promise<EmployeeDocument[]> {
     return this.employeeService.getAllEmployees(user);
+  }
+
+  @Get(':employeeId')
+  @UseGuards(AuthGuard('jwt'))
+  async getEmployee(
+    @Param() { employeeId }: { employeeId: string },
+    @GetUser() user: UserDocument,
+  ): Promise<EmployeeDocument> {
+    return this.employeeService.getEmployee(employeeId, user);
+  }
+
+  @Put(':employeeId')
+  @UseGuards(AuthGuard('jwt'))
+  async updateEmployee(
+    @Body()
+    updateEmployeeAttrs: Partial<CreateEmployeeRequestDto>,
+    @Param() { employeeId }: { employeeId: string },
+    @GetUser() user: UserDocument,
+  ): Promise<EmployeeDocument> {
+    return this.employeeService.updateEmployee(
+      employeeId,
+      updateEmployeeAttrs,
+      user,
+    );
   }
 }
