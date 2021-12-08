@@ -3,13 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { User, UserDocument } from './schema/user.schema';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
+import { BaseRepository } from 'src/shared/repository/base.repository';
 
 @Injectable()
-export class UserRepository {
-  constructor(@InjectModel('User') private readonly userModal: Model<User>) {}
-
-  async createUser(data: SignupRequestDto): Promise<UserDocument> {
-    return this.userModal.create(data);
+export class UserRepository extends BaseRepository<UserDocument> {
+  constructor(
+    @InjectModel(User.name) private readonly userModal: Model<UserDocument>,
+  ) {
+    super(userModal);
   }
 
   async findByEmail(email: string): Promise<UserDocument> {
@@ -18,12 +19,5 @@ export class UserRepository {
       return;
     }
     return user;
-  }
-
-  async findByIdAndUpdate(
-    id: ObjectId,
-    data: Partial<User>,
-  ): Promise<UserDocument> {
-    return this.userModal.findByIdAndUpdate(id, data);
   }
 }

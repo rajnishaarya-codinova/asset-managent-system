@@ -1,9 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { Serialize } from 'src/shared/interceptors/serialize.interceptor';
 import { TokenRequestDto } from './dtos/request/token-request.dto';
 import { SigninRequestDto } from './dtos/request/sign-request.dto';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
-import { UserResponseDto } from './dtos/response/user-response.dto';
 import { UserDocument } from './schema/user.schema';
 import { UserService } from './user.service';
 
@@ -11,19 +9,20 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Serialize(UserResponseDto)
   @Post('/signup')
-  signup(@Body() body: SignupRequestDto): Promise<UserDocument> {
-    return this.userService.signup(body);
+  signup(@Body() signUpAttrs: SignupRequestDto): Promise<UserDocument> {
+    return this.userService.signup(signUpAttrs);
   }
 
   @Post('/signin')
-  signin(@Body() body: SigninRequestDto): Promise<TokenRequestDto> {
-    return this.userService.signin(body);
+  signin(@Body() signInAttrs: SigninRequestDto): Promise<TokenRequestDto> {
+    return this.userService.signin(signInAttrs);
   }
 
   @Post('/jwt/refresh')
-  refreshJwtToken(@Body() body: TokenRequestDto): Promise<TokenRequestDto> {
-    return this.userService.reissueAuthToken(body);
+  refreshJwtToken(
+    @Body() refreshTokenAttrs: TokenRequestDto,
+  ): Promise<TokenRequestDto> {
+    return this.userService.reissueAuthToken(refreshTokenAttrs);
   }
 }
