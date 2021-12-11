@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { isValidId } from 'src/shared/utils/common.utils';
 import { UserDocument } from 'src/user/schema/user.schema';
-import { CreateEmployeeRequestWithManagerDto } from './dtos/request/create-employee-request.dto';
+import { CreateEmployeeRequestDto } from './dtos/request/create-employee-request.dto';
 import { EmployeeRepository } from './employee.repository';
 import { Employee, EmployeeDocument } from './schema/employee.schema';
 
@@ -10,16 +10,18 @@ export class EmployeeService {
   constructor(private readonly employeeRepository: EmployeeRepository) {}
 
   async createEmployee(
-    createEmployeeAttrs: CreateEmployeeRequestWithManagerDto,
+    createEmployeeAttrs: CreateEmployeeRequestDto,
+    user: UserDocument,
   ): Promise<EmployeeDocument> {
-    const createdEmployee = await this.employeeRepository.create(
-      createEmployeeAttrs,
-    );
+    const createdEmployee = await this.employeeRepository.create({
+      ...createEmployeeAttrs,
+      managedBy: user._id,
+    });
     return createdEmployee;
   }
 
   async getAllEmployees(user: UserDocument): Promise<EmployeeDocument[]> {
-    return this.employeeRepository.find({ manager: user._id });
+    return this.employeeRepository.find({ managedBy: user._id });
   }
 
   async getEmployee(
@@ -31,7 +33,7 @@ export class EmployeeService {
     }
     const employee = await this.employeeRepository.findOne({
       _id: employeeId,
-      manager: user._id,
+      managedBy: user._id,
     });
     if (!employee) {
       throw new BadRequestException('Employee not found');
@@ -49,7 +51,7 @@ export class EmployeeService {
     }
     const employee = await this.employeeRepository.findOne({
       _id: employeeId,
-      manager: user._id,
+      managedBy: user._id,
     });
     if (!employee) {
       throw new BadRequestException('Employee not found');

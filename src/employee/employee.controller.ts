@@ -25,10 +25,7 @@ export class EmployeeController {
     createEmployeeAttrs: CreateEmployeeRequestDto,
     @GetUser() user: UserDocument,
   ): Promise<EmployeeDocument> {
-    return this.employeeService.createEmployee({
-      ...createEmployeeAttrs,
-      manager: user._id,
-    });
+    return this.employeeService.createEmployee(createEmployeeAttrs, user);
   }
 
   @Get()
