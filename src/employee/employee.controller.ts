@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -58,5 +59,14 @@ export class EmployeeController {
       updateEmployeeAttrs,
       user,
     );
+  }
+
+  @Delete(':employeeId')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteEmployee(
+    @Param() { employeeId }: { employeeId: string },
+    @GetUser() user: UserDocument,
+  ): Promise<boolean> {
+    return this.employeeService.deleteEmployee(employeeId, user);
   }
 }
