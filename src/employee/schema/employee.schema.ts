@@ -1,5 +1,6 @@
 import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, RefType, Schema as mongoSchema } from 'mongoose';
+import { User } from 'src/user/schema/user.schema';
 
 export type EmployeeDocument = Employee & Document;
 
@@ -34,8 +35,8 @@ export class Employee {
   )
   address?: IAddress;
 
-  @Prop({ type: mongoSchema.Types.ObjectId, ref: 'User' })
-  manager: RefType;
+  @Prop({ type: mongoSchema.Types.ObjectId, ref: User.name })
+  managedBy: RefType;
 }
 
 export const EmployeeSchema = SchemaFactory.createForClass(Employee);

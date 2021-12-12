@@ -33,8 +33,3 @@ export class CreateEmployeeRequestDto {
   @Type(() => AddressRequestDto)
   address?: IAddress;
 }
-
-export class CreateEmployeeRequestWithManagerDto extends CreateEmployeeRequestDto {
-  @IsMongoId()
-  manager: ObjectId;
-}
