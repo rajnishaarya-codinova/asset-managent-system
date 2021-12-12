@@ -31,14 +31,10 @@ export class EmployeeService {
     if (!isValidId(employeeId)) {
       throw new BadRequestException('Inavlid Employee Id');
     }
-    const employee = await this.employeeRepository.findOne({
+    return this.employeeRepository.findOne({
       _id: employeeId,
       managedBy: user._id,
     });
-    if (!employee) {
-      throw new BadRequestException('Employee not found');
-    }
-    return employee;
   }
 
   async updateEmployee(
@@ -61,5 +57,16 @@ export class EmployeeService {
       updateEmployeeAttrs,
     );
     return updatedEmployee;
+  }
+
+  async deleteEmployee(
+    employeeId: string,
+    user: UserDocument,
+  ): Promise<boolean> {
+    const employee = await this.getEmployee(employeeId, user);
+    if (!employee) {
+      throw new BadRequestException();
+    }
+    return this.employeeRepository.deleteOne({ _id: employeeId });
   }
 }

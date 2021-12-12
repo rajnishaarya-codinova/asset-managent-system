@@ -1,9 +1,11 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { TokenRequestDto } from './dtos/request/token-request.dto';
 import { SigninRequestDto } from './dtos/request/sign-request.dto';
 import { SignupRequestDto } from './dtos/request/signup-request.dto';
 import { UserDocument } from './schema/user.schema';
 import { UserService } from './user.service';
+import { GetUser } from 'src/shared/decorators/getUser.decorator';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 export class UserController {
@@ -24,5 +26,11 @@ export class UserController {
     @Body() refreshTokenAttrs: TokenRequestDto,
   ): Promise<TokenRequestDto> {
     return this.userService.reissueAuthToken(refreshTokenAttrs);
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  getMe(@GetUser() user: UserDocument): UserDocument {
+    return user;
   }
 }
