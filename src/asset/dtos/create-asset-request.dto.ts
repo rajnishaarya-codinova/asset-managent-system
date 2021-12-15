@@ -2,6 +2,7 @@ import {
   IsCurrency,
   IsDate,
   IsEnum,
+  IsNotEmpty,
   IsString,
   ValidateIf,
 } from 'class-validator';
@@ -9,9 +10,11 @@ import { assetConditionEnum, assetTypeEnum } from 'src/shared/enum/asset.enum';
 
 export class CreateAssetRequestDto {
   @IsString()
+  @IsNotEmpty()
   sId: string;
 
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @IsString()
@@ -26,7 +29,8 @@ export class CreateAssetRequestDto {
   price?: number;
 
   @IsEnum(assetTypeEnum)
-  type: string;
+  @IsNotEmpty()
+  type: assetTypeEnum;
 
   @ValidateIf((reqAttrs) => !!reqAttrs.condition)
   @IsEnum(assetConditionEnum)

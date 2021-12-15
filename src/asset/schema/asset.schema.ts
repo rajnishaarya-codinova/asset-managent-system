@@ -48,6 +48,9 @@ export class Asset {
 
   @Prop()
   allocatedOn: Date;
+
+  @Prop()
+  qrCode: string;
 }
 
 export const AssetSchema = SchemaFactory.createForClass(Asset);

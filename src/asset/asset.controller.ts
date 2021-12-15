@@ -6,14 +6,18 @@ import {
   Param,
   Post,
   Put,
+  Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/shared/decorators/getUser.decorator';
 import { UserDocument } from 'src/user/schema/user.schema';
 import { AssetService } from './asset.service';
 import { CreateAssetRequestDto } from './dtos/create-asset-request.dto';
-import { AssetDocument } from './schema/asset.schema';
+import { Asset, AssetDocument } from './schema/asset.schema';
 
 @Controller('asset')
 export class AssetController {
@@ -30,8 +34,11 @@ export class AssetController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
-  async getAllAssets(@GetUser() user: UserDocument): Promise<AssetDocument[]> {
-    return this.assetService.getAllAssets(user);
+  async getAllAssets(
+    @GetUser() user: UserDocument,
+    @Query() query: Partial<Asset>,
+  ): Promise<AssetDocument[]> {
+    return this.assetService.getAllAssets(user, query);
   }
 
   @Put(':assetId/allocate/:employeeId')
@@ -78,5 +85,12 @@ export class AssetController {
     @GetUser() user: UserDocument,
   ): Promise<AssetDocument> {
     return this.assetService.getAsset(assetId, user);
+  }
+
+  @Post('upload')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file, @GetUser() user: UserDocument) {
+    return this.assetService.uploadFile(file, user);
   }
 }
