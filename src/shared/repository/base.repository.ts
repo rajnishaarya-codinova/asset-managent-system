@@ -7,7 +7,6 @@ import {
   ObjectId,
   UpdateQuery,
 } from 'mongoose';
-import { uuid } from '../utils/common.utils';
 
 export abstract class BaseRepository<T extends Document> {
   constructor(protected readonly baseModel: Model<T>) {}
@@ -42,8 +41,7 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   async create(createModelData: AnyKeys<T> | AnyObject): Promise<T> {
-    const createModelDataWithId = { id: uuid(), ...createModelData };
-    return this.baseModel.create(createModelDataWithId);
+    return this.baseModel.create(createModelData);
   }
 
   async findOneAndUpdate(
