@@ -12,6 +12,7 @@ import { CreateAssetRequestDto } from './dtos/create-asset-request.dto';
 import { Asset, AssetDocument } from './schema/asset.schema';
 import * as xlsx from 'xlsx';
 import * as QRCode from 'qrcode';
+import { CloudinaryService } from 'src/shared/cloudinary/cloudinary.service';
 
 const validFormats = [
   'application/vnd.ms-excel',
@@ -22,6 +23,7 @@ export class AssetService {
   constructor(
     private readonly assetRepository: AssetRepository,
     private readonly employeeService: EmployeeService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async generateQrCode(document: AssetDocument) {
@@ -32,7 +34,9 @@ export class AssetService {
     delete jsonDoc.allocatedOn;
     delete jsonDoc.ownedBy;
     delete jsonDoc.qrCode;
-    document.qrCode = await QRCode.toDataURL(JSON.stringify(jsonDoc));
+    const qrImage = await QRCode.toDataURL(JSON.stringify(jsonDoc));
+    const qrUrl = await this.cloudinaryService.uploadToCloudinary(qrImage);
+    document.qrCode = qrUrl;
     document.save();
   }
 
