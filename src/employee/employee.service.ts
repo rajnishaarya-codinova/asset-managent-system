@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { ExcelUploadService } from 'src/shared/ExcelUpload/excel-upload.service';
 import { isValidId } from 'src/shared/utils/common.utils';
 import { UserDocument } from 'src/user/schema/user.schema';
 import { CreateEmployeeRequestDto } from './dtos/request/create-employee-request.dto';
@@ -7,7 +12,38 @@ import { Employee, EmployeeDocument } from './schema/employee.schema';
 
 @Injectable()
 export class EmployeeService {
-  constructor(private readonly employeeRepository: EmployeeRepository) {}
+  constructor(
+    private readonly employeeRepository: EmployeeRepository,
+    private readonly excelUploadService: ExcelUploadService,
+  ) {}
+
+  validateFile(data: CreateEmployeeRequestDto): void {
+    if (
+      typeof data.empId === undefined ||
+      typeof data.empId !== 'string' ||
+      data.empId.trim().length < 1
+    ) {
+      throw new BadRequestException();
+    } else if (
+      typeof data.firstName === undefined ||
+      typeof data.firstName !== 'string' ||
+      data.firstName.trim().length < 1
+    ) {
+      throw new BadRequestException();
+    } else if (
+      typeof data.lastName === undefined ||
+      typeof data.lastName !== 'string' ||
+      data.lastName.trim().length < 1
+    ) {
+      throw new BadRequestException();
+    } else if (
+      typeof data.email === undefined ||
+      typeof data.email !== 'string' ||
+      data.email.trim().length < 1
+    ) {
+      throw new BadRequestException();
+    }
+  }
 
   async createEmployee(
     createEmployeeAttrs: CreateEmployeeRequestDto,
@@ -68,5 +104,22 @@ export class EmployeeService {
       throw new BadRequestException();
     }
     return this.employeeRepository.deleteOne({ _id: employeeId });
+  }
+
+  async uploadFile(file: any, user: UserDocument): Promise<EmployeeDocument[]> {
+    try {
+      const data = this.excelUploadService.getData(file);
+      const records = data.map((i: CreateEmployeeRequestDto) => {
+        this.validateFile(i);
+        return { ...i, managedBy: user._id };
+      });
+      const uploaded = await this.employeeRepository.bulkInsert(records);
+      return uploaded;
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new BadRequestException();
+      }
+      throw new InternalServerErrorException();
+    }
   }
 }
