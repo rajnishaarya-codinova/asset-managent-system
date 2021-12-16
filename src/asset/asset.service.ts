@@ -10,20 +10,17 @@ import { UserDocument } from 'src/user/schema/user.schema';
 import { AssetRepository } from './asset.repository';
 import { CreateAssetRequestDto } from './dtos/create-asset-request.dto';
 import { Asset, AssetDocument } from './schema/asset.schema';
-import * as xlsx from 'xlsx';
 import * as QRCode from 'qrcode';
 import { CloudinaryService } from 'src/shared/cloudinary/cloudinary.service';
+import { ExcelUploadService } from 'src/shared/ExcelUpload/excel-upload.service';
 
-const validFormats = [
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-];
 @Injectable()
 export class AssetService {
   constructor(
     private readonly assetRepository: AssetRepository,
     private readonly employeeService: EmployeeService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly excelUploadService: ExcelUploadService,
   ) {}
 
   async generateQrCode(document: AssetDocument) {
@@ -40,7 +37,7 @@ export class AssetService {
     document.save();
   }
 
-  validateFile(data: CreateAssetRequestDto) {
+  validateFile(data: CreateAssetRequestDto): void {
     if (
       typeof data.sId === undefined ||
       typeof data.sId !== 'string' ||
@@ -63,7 +60,6 @@ export class AssetService {
     ) {
       throw new BadRequestException();
     }
-    return data;
   }
 
   async createAsset(
@@ -153,23 +149,20 @@ export class AssetService {
     return updatedAsset;
   }
 
-  async uploadFile(file, user) {
+  async uploadFile(file: any, user: UserDocument): Promise<AssetDocument[]> {
     try {
-      if (!validFormats.includes(file.mimetype)) {
-        throw new BadRequestException();
-      }
-      const wb = xlsx.read(file.buffer, { type: 'buffer' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = xlsx.utils.sheet_to_json(ws);
-      const records = data.map((i: CreateAssetRequestDto) =>
-        this.validateFile(i),
-      );
-      records.map((asset) => {
-        this.createAsset(asset, user);
+      const data = this.excelUploadService.getData(file);
+      const records = data.map((i: CreateAssetRequestDto) => {
+        this.validateFile(i);
+        return { ...i, ownedBy: user._id };
       });
-      return true;
+      const uploaded = await this.assetRepository.bulkInsert(records);
+      uploaded.map((item) => {
+        this.generateQrCode(item);
+      });
+      return uploaded;
     } catch (error) {
-      if (error.status === 400) {
+      if (error.code === 11000) {
         throw new BadRequestException();
       }
       throw new InternalServerErrorException();

@@ -12,7 +12,7 @@ export type AssetDocument = Asset & Document;
 
 @Schema()
 export class Asset {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   sId: string;
 
   @Prop({ required: true })

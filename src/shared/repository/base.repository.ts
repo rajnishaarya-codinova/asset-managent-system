@@ -44,6 +44,12 @@ export abstract class BaseRepository<T extends Document> {
     return this.baseModel.create(createModelData);
   }
 
+  async bulkInsert(
+    createModelDataArray: Array<AnyKeys<T> | AnyObject>,
+  ): Promise<T[]> {
+    return this.baseModel.insertMany(createModelDataArray);
+  }
+
   async findOneAndUpdate(
     filterQuery: FilterQuery<T>,
     updateQuery: UpdateQuery<T>,
