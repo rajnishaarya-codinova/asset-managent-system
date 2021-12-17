@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { AuthService } from 'src/shared/auth/auth.service';
 import { comparePassword, hashPassword } from 'src/shared/utils/userUtils';
-import { SigninRequestDto } from './dtos/request/sign-request.dto';
-import { SignupRequestDto } from './dtos/request/signup-request.dto';
+import { SignInRequestDto } from './dtos/request/sign-request.dto';
+import { SignUpRequestDto } from './dtos/request/signup-request.dto';
 import { UserRepository } from './user.repository';
 import { daysFromNow, isExpired, uuid } from 'src/shared/utils/common.utils';
 import { TokenRequestDto } from './dtos/request/token-request.dto';
@@ -34,7 +34,7 @@ export class UserService {
     return token;
   }
 
-  async signup(signUpAttrs: SignupRequestDto): Promise<UserDocument> {
+  async signUp(signUpAttrs: SignUpRequestDto): Promise<UserDocument> {
     const existing = await this.userRepository.findByEmail(signUpAttrs.email);
     if (existing) {
       throw new BadRequestException(userExceptionEnum.USER_ALREADY_EXIST);
@@ -46,8 +46,8 @@ export class UserService {
     });
   }
 
-  async signin(
-    signInAttrs: SigninRequestDto,
+  async signIn(
+    signInAttrs: SignInRequestDto,
   ): Promise<{ token: string; refreshToken: string }> {
     const user = await this.userRepository.findByEmail(signInAttrs.email);
     if (!user) {

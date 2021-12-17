@@ -43,16 +43,16 @@ export class AssetController {
 
   @Put(':assetId/allocate/:employeeId')
   @UseGuards(AuthGuard('jwt'))
-  async allocatAsset(
+  async allocateAsset(
     @Param() { assetId, employeeId }: { assetId: string; employeeId: string },
     @GetUser() user: UserDocument,
   ): Promise<AssetDocument> {
     return this.assetService.allotAsset(assetId, employeeId, user);
   }
 
-  @Put(':assetId/unallocate')
+  @Put(':assetId/un-allocate')
   @UseGuards(AuthGuard('jwt'))
-  async unAllocatAsset(
+  async unAllocateAsset(
     @Param() { assetId }: { assetId: string },
     @GetUser() user: UserDocument,
   ): Promise<AssetDocument> {

@@ -29,7 +29,7 @@ export class Employee {
     raw({
       city: String,
       state: String,
-      coutry: String,
+      country: String,
       zipCode: Number,
     }),
   )

@@ -4,15 +4,15 @@ import { commonExceptionEnum } from '../enum/common-exception.enum';
 
 @Injectable()
 export class ExcelUploadService {
-  private readonly validFileFormates: Array<string>;
+  private readonly validFileFormats: Array<string>;
   constructor() {
-    this.validFileFormates = [
+    this.validFileFormats = [
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
   }
   getData(file: any) {
-    if (!this.validFileFormates.includes(file.mimetype)) {
+    if (!this.validFileFormats.includes(file.mimetype)) {
       throw new BadRequestException(commonExceptionEnum.INVALID_FILE_FORMAT);
     }
     const wb = xlsx.read(file.buffer, { type: 'buffer' });
