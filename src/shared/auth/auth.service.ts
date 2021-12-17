@@ -4,6 +4,7 @@ import { User } from 'src/user/schema/user.schema';
 import { UserRepository } from 'src/user/user.repository';
 import { ConfigurationService } from '../config/config.service';
 import { ConfigEnum } from '../enum/config.enum';
+import { userExceptionEnum } from '../enum/user-exception.enum';
 import { IJwtPayload } from './jwt-payload.interface';
 
 @Injectable()
@@ -34,7 +35,7 @@ export class AuthService {
   async validatePayload(payload: IJwtPayload): Promise<User> {
     const user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(userExceptionEnum.USER_UNAUTHORIZED);
     }
     return user;
   }
