@@ -6,9 +6,12 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { GetUser } from 'src/shared/decorators/getUser.decorator';
 import { UserDocument } from 'src/user/schema/user.schema';
 import { CreateEmployeeRequestDto } from './dtos/request/create-employee-request.dto';
@@ -68,5 +71,15 @@ export class EmployeeController {
     @GetUser() user: UserDocument,
   ): Promise<boolean> {
     return this.employeeService.deleteEmployee(employeeId, user);
+  }
+
+  @Post('upload')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @UploadedFile() file: any,
+    @GetUser() user: UserDocument,
+  ): Promise<EmployeeDocument[]> {
+    return this.employeeService.uploadFile(file, user);
   }
 }

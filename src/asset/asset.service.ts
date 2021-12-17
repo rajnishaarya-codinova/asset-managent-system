@@ -10,20 +10,20 @@ import { UserDocument } from 'src/user/schema/user.schema';
 import { AssetRepository } from './asset.repository';
 import { CreateAssetRequestDto } from './dtos/create-asset-request.dto';
 import { Asset, AssetDocument } from './schema/asset.schema';
-import * as xlsx from 'xlsx';
 import * as QRCode from 'qrcode';
 import { CloudinaryService } from 'src/shared/cloudinary/cloudinary.service';
+import { ExcelUploadService } from 'src/shared/ExcelUpload/excel-upload.service';
+import { AssetExceptionEnum } from 'src/shared/enum/asset-exception';
+import { EmployeeExceptionEnum } from 'src/shared/enum/employee-exception.enum';
+import { commonExceptionEnum } from 'src/shared/enum/common-exception.enum';
 
-const validFormats = [
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-];
 @Injectable()
 export class AssetService {
   constructor(
     private readonly assetRepository: AssetRepository,
     private readonly employeeService: EmployeeService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly excelUploadService: ExcelUploadService,
   ) {}
 
   async generateQrCode(document: AssetDocument) {
@@ -40,19 +40,19 @@ export class AssetService {
     document.save();
   }
 
-  validateFile(data: CreateAssetRequestDto) {
+  validateFile(data: CreateAssetRequestDto): void {
     if (
       typeof data.sId === undefined ||
       typeof data.sId !== 'string' ||
       data.sId.trim().length < 1
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_SID_REQUIRED);
     } else if (
       typeof data.name === undefined ||
       typeof data.name !== 'string' ||
       data.name.trim().length < 1
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NAME_REQUIRED);
     } else if (
       ![
         assetTypeEnum.DESKTOP,
@@ -61,15 +61,18 @@ export class AssetService {
         assetTypeEnum.OTHER,
       ].includes(data.type)
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.INVALID_ASSET_TYPE);
     }
-    return data;
   }
 
   async createAsset(
     createAssetAttrs: CreateAssetRequestDto,
     user: UserDocument,
   ): Promise<AssetDocument> {
+    const asset = await this.assetRepository.findOne({ sId: createAssetAttrs.sId });
+    if(asset){
+      throw new BadRequestException(AssetExceptionEnum.ASSET_ALREADY_EXIST)
+    }
     const createdAsset = await this.assetRepository.create({
       ...createAssetAttrs,
       ownedBy: user._id,
@@ -80,7 +83,7 @@ export class AssetService {
 
   async getAsset(assetId: string, user: UserDocument): Promise<AssetDocument> {
     if (!isValidId(assetId)) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.INVALID_ASSET_ID);
     }
     return this.assetRepository.findOne({ _id: assetId, ownedBy: user._id });
   }
@@ -99,11 +102,11 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const employee = await this.employeeService.getEmployee(employeeId, user);
     if (!employee) {
-      throw new BadRequestException();
+      throw new BadRequestException(EmployeeExceptionEnum.EMPLOYEE_NOT_FOUND);
     }
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     asset.allotedTo = employeeId;
     asset.allocatedOn = new Date();
@@ -117,7 +120,7 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     const assetInstance = await this.assetRepository.findById(asset._id);
     assetInstance.status = assetStatusEnum.UN_ALLOTED;
@@ -130,7 +133,7 @@ export class AssetService {
   async deleteAsset(assetId: string, user: UserDocument): Promise<boolean> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     return this.assetRepository.deleteOne({ _id: asset._id });
   }
@@ -142,7 +145,7 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     const updatedAsset = await this.assetRepository.findByIdAndUpdate(
       asset._id,
@@ -153,26 +156,23 @@ export class AssetService {
     return updatedAsset;
   }
 
-  async uploadFile(file, user) {
+  async uploadFile(file: any, user: UserDocument): Promise<AssetDocument[]> {
     try {
-      if (!validFormats.includes(file.mimetype)) {
-        throw new BadRequestException();
-      }
-      const wb = xlsx.read(file.buffer, { type: 'buffer' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = xlsx.utils.sheet_to_json(ws);
-      const records = data.map((i: CreateAssetRequestDto) =>
-        this.validateFile(i),
-      );
-      records.map((asset) => {
-        this.createAsset(asset, user);
+      const data = this.excelUploadService.getData(file);
+      const records = data.map((i: CreateAssetRequestDto) => {
+        this.validateFile(i);
+        return { ...i, ownedBy: user._id };
       });
-      return true;
+      const uploaded = await this.assetRepository.bulkInsert(records);
+      uploaded.map((item) => {
+        this.generateQrCode(item);
+      });
+      return uploaded;
     } catch (error) {
-      if (error.status === 400) {
-        throw new BadRequestException();
+      if (error.code === 11000) {
+        throw new BadRequestException(AssetExceptionEnum.ASSET_ALREADY_EXIST);
       }
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException(commonExceptionEnum.SOMETHING_WENT_WRONG);
     }
   }
 }

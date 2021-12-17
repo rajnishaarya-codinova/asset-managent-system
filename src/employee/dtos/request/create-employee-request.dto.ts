@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsMongoId, IsNumber, IsString } from 'class-validator';
-import { ObjectId } from 'mongoose';
+import { IsEmail, IsNumber, IsString } from 'class-validator';
 import { IAddress } from 'src/employee/schema/employee.schema';
 
 export class AddressRequestDto {

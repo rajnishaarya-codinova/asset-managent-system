@@ -90,7 +90,10 @@ export class AssetController {
   @Post('upload')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file, @GetUser() user: UserDocument) {
+  async uploadFile(
+    @UploadedFile() file: any,
+    @GetUser() user: UserDocument,
+  ): Promise<AssetDocument[]> {
     return this.assetService.uploadFile(file, user);
   }
 }
