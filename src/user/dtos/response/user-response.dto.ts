@@ -12,4 +12,7 @@ export class UserResponseDto {
 
   @Expose()
   company: string;
+
+  @Expose()
+  address?: string
 }

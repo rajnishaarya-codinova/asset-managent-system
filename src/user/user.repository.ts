@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { User, UserDocument } from './schema/user.schema';
-import { SignupRequestDto } from './dtos/request/signup-request.dto';
+import { SignUpRequestDto } from './dtos/request/signup-request.dto';
 import { BaseRepository } from 'src/shared/repository/base.repository';
 
 @Injectable()

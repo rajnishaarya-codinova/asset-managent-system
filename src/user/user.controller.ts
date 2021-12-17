@@ -1,24 +1,27 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { TokenRequestDto } from './dtos/request/token-request.dto';
-import { SigninRequestDto } from './dtos/request/sign-request.dto';
-import { SignupRequestDto } from './dtos/request/signup-request.dto';
+import { SignInRequestDto } from './dtos/request/sign-request.dto';
+import { SignUpRequestDto } from './dtos/request/signup-request.dto';
 import { UserDocument } from './schema/user.schema';
 import { UserService } from './user.service';
 import { GetUser } from 'src/shared/decorators/getUser.decorator';
 import { AuthGuard } from '@nestjs/passport';
+import { Serialize } from 'src/shared/interceptors/serialize.interceptor';
+import { UserResponseDto } from './dtos/response/user-response.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('/signup')
-  signup(@Body() signUpAttrs: SignupRequestDto): Promise<UserDocument> {
-    return this.userService.signup(signUpAttrs);
+  @Serialize(UserResponseDto)
+  @Post('/signUp')
+  signUp(@Body() signUpAttrs: SignUpRequestDto): Promise<UserDocument> {
+    return this.userService.signUp(signUpAttrs);
   }
 
-  @Post('/signin')
-  signin(@Body() signInAttrs: SigninRequestDto): Promise<TokenRequestDto> {
-    return this.userService.signin(signInAttrs);
+  @Post('/signIn')
+  signIn(@Body() signInAttrs: SignInRequestDto): Promise<TokenRequestDto> {
+    return this.userService.signIn(signInAttrs);
   }
 
   @Post('/jwt/refresh')
@@ -28,6 +31,7 @@ export class UserController {
     return this.userService.reissueAuthToken(refreshTokenAttrs);
   }
 
+  @Serialize(UserResponseDto)
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   getMe(@GetUser() user: UserDocument): UserDocument {
