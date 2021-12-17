@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ExcelUploadService } from 'src/shared/ExcelUpload/excel-upload.service';
+import { EmployeeExceptionEnum } from 'src/shared/enum/employee-exception.enum';
 import { isValidId } from 'src/shared/utils/common.utils';
 import { UserDocument } from 'src/user/schema/user.schema';
 import { CreateEmployeeRequestDto } from './dtos/request/create-employee-request.dto';
@@ -65,7 +66,7 @@ export class EmployeeService {
     user: UserDocument,
   ): Promise<EmployeeDocument> {
     if (!isValidId(employeeId)) {
-      throw new BadRequestException('Inavlid Employee Id');
+      throw new BadRequestException(EmployeeExceptionEnum.INVALID_EMPLOYEE_ID);
     }
     return this.employeeRepository.findOne({
       _id: employeeId,
@@ -79,14 +80,14 @@ export class EmployeeService {
     user: UserDocument,
   ): Promise<EmployeeDocument> {
     if (!isValidId(employeeId)) {
-      throw new BadRequestException('Inavlid Employee Id');
+      throw new BadRequestException(EmployeeExceptionEnum.INVALID_EMPLOYEE_ID);
     }
     const employee = await this.employeeRepository.findOne({
       _id: employeeId,
       managedBy: user._id,
     });
     if (!employee) {
-      throw new BadRequestException('Employee not found');
+      throw new BadRequestException(EmployeeExceptionEnum.EMPLOYEE_NOT_FOUND);
     }
     const updatedEmployee = await this.employeeRepository.findByIdAndUpdate(
       employeeId,

@@ -13,6 +13,9 @@ import { Asset, AssetDocument } from './schema/asset.schema';
 import * as QRCode from 'qrcode';
 import { CloudinaryService } from 'src/shared/cloudinary/cloudinary.service';
 import { ExcelUploadService } from 'src/shared/ExcelUpload/excel-upload.service';
+import { AssetExceptionEnum } from 'src/shared/enum/asset-exception';
+import { EmployeeExceptionEnum } from 'src/shared/enum/employee-exception.enum';
+import { commonExceptionEnum } from 'src/shared/enum/common-exception.enum';
 
 @Injectable()
 export class AssetService {
@@ -43,13 +46,13 @@ export class AssetService {
       typeof data.sId !== 'string' ||
       data.sId.trim().length < 1
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_SID_REQUIRED);
     } else if (
       typeof data.name === undefined ||
       typeof data.name !== 'string' ||
       data.name.trim().length < 1
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NAME_REQUIRED);
     } else if (
       ![
         assetTypeEnum.DESKTOP,
@@ -58,7 +61,7 @@ export class AssetService {
         assetTypeEnum.OTHER,
       ].includes(data.type)
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.INVALID_ASSET_TYPE);
     }
   }
 
@@ -66,6 +69,10 @@ export class AssetService {
     createAssetAttrs: CreateAssetRequestDto,
     user: UserDocument,
   ): Promise<AssetDocument> {
+    const asset = await this.assetRepository.findOne({ sId: createAssetAttrs.sId });
+    if(asset){
+      throw new BadRequestException(AssetExceptionEnum.ASSET_ALREADY_EXIST)
+    }
     const createdAsset = await this.assetRepository.create({
       ...createAssetAttrs,
       ownedBy: user._id,
@@ -76,7 +83,7 @@ export class AssetService {
 
   async getAsset(assetId: string, user: UserDocument): Promise<AssetDocument> {
     if (!isValidId(assetId)) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.INVALID_ASSET_ID);
     }
     return this.assetRepository.findOne({ _id: assetId, ownedBy: user._id });
   }
@@ -95,11 +102,11 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const employee = await this.employeeService.getEmployee(employeeId, user);
     if (!employee) {
-      throw new BadRequestException();
+      throw new BadRequestException(EmployeeExceptionEnum.EMPLOYEE_NOT_FOUND);
     }
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     asset.allotedTo = employeeId;
     asset.allocatedOn = new Date();
@@ -113,7 +120,7 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     const assetInstance = await this.assetRepository.findById(asset._id);
     assetInstance.status = assetStatusEnum.UN_ALLOTED;
@@ -126,7 +133,7 @@ export class AssetService {
   async deleteAsset(assetId: string, user: UserDocument): Promise<boolean> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     return this.assetRepository.deleteOne({ _id: asset._id });
   }
@@ -138,7 +145,7 @@ export class AssetService {
   ): Promise<AssetDocument> {
     const asset = await this.getAsset(assetId, user);
     if (!asset) {
-      throw new BadRequestException();
+      throw new BadRequestException(AssetExceptionEnum.ASSET_NOT_FOUND);
     }
     const updatedAsset = await this.assetRepository.findByIdAndUpdate(
       asset._id,
@@ -163,9 +170,9 @@ export class AssetService {
       return uploaded;
     } catch (error) {
       if (error.code === 11000) {
-        throw new BadRequestException();
+        throw new BadRequestException(AssetExceptionEnum.ASSET_ALREADY_EXIST);
       }
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException(commonExceptionEnum.SOMETHING_WENT_WRONG);
     }
   }
 }
