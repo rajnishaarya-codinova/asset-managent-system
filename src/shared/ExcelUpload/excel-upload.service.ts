@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { FileHandle } from 'fs/promises';
 import * as xlsx from 'xlsx';
+import { commonExceptionEnum } from '../enum/common-exception.enum';
 
 @Injectable()
 export class ExcelUploadService {
@@ -13,7 +13,7 @@ export class ExcelUploadService {
   }
   getData(file: any) {
     if (!this.validFileFormates.includes(file.mimetype)) {
-      throw new BadRequestException();
+      throw new BadRequestException(commonExceptionEnum.INVALID_FILE_FORMAT);
     }
     const wb = xlsx.read(file.buffer, { type: 'buffer' });
     const ws = wb.Sheets[wb.SheetNames[0]];
